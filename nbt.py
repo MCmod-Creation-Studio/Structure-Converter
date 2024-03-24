@@ -2,6 +2,7 @@ import json
 import python_nbt.nbt as nbt
 import os
 
+
 def replace_quotes(input_file):
     with open(f"nbt/json/{input_file}.json", 'r') as f:
         content = f.read()
@@ -11,6 +12,7 @@ def replace_quotes(input_file):
 
     with open(f"nbt/json/{input_file}.json", 'w') as f:
         f.write(modified_content)
+
 
 def print_structure(filename):
     nbt_content = str(nbt.read_from_nbt_file(f"nbt/{filename}.nbt"))
@@ -26,6 +28,9 @@ def print_structure(filename):
     blocks = json_data["value"]["blocks"]["value"]
     palette = json_data["value"]["palette"]["value"]
 
+    print(f"{filename} is a {size[0]}x{size[1]}x{size[2]} structure")
+    print("Total blocks:", len(blocks))
+
     output = ""
     unique_blocks = set()  # 用于存储不重复的 block_name
 
@@ -34,18 +39,36 @@ def print_structure(filename):
             row = ""
             for x in range(size[0]):
                 index = x + size[0] * (z + size[2] * y)
-                block_id = blocks[index]["state"]["value"]
-                block_name = palette[block_id]["Name"]["value"]
-                row += block_name + " "
-                unique_blocks.add(block_name)  # 将 block_name 添加到集合中
-            output += row + "\n"
+                if index < len(blocks):
+                    block_id = blocks[index]["state"]["value"]
+                    block_name = palette[block_id]["Name"]["value"]
+                    row += block_name + ","
+                    unique_blocks.add(block_name)  # 将 block_name 添加到集合中
+                else:
+                    block_name = "minecraft:air"
+                    row += block_name + ","
+                    # print("Index out of range:", index)
+                    continue  # 超出部分都是空气，跳过当前迭代，继续
+            row = row.rstrip(',') + " \n"
+            output += row
         output += "\n"
-
     return output, unique_blocks
 
-nbt_files = [file.split('.')[0] for file in os.listdir('nbt') if file.endswith('.nbt')]
+def check_folder():
+    if not os.path.exists('nbt'):
+        os.makedirs('nbt')
+    if not os.path.exists('nbt/json'):
+        os.makedirs('nbt/json')
+    if not os.path.exists('nbt/txt'):
+        os.makedirs('nbt/txt')
+    if not os.path.exists('nbt/txt/texture'):
+        os.makedirs('nbt/txt/texture')
+
+check_folder()
 
 all_unique_blocks = set()  # 用于存储所有文件中不重复的 block_name
+# 所有的 .nbt
+nbt_files = [file.split('.')[0] for file in os.listdir('nbt') if file.endswith('.nbt')]
 
 for filename in nbt_files:
     output_text, unique_blocks = print_structure(filename)
