@@ -22,14 +22,12 @@ def print_structure(filename):
     with open(f'nbt/json/{filename}.json', 'r') as f:
         json_data = json.load(f)
 
-    # print(type(json_data))
-
     size = json_data["value"]["size"]["value"]
     blocks = json_data["value"]["blocks"]["value"]
     palette = json_data["value"]["palette"]["value"]
 
-    print(f"{filename} is a {size[0]}x{size[1]}x{size[2]} structure")
     output = ""
+    unique_blocks = set()  # 用于存储不重复的 block_name
 
     for y in range(size[1]):
         for z in range(size[2]):
@@ -39,25 +37,27 @@ def print_structure(filename):
                 block_id = blocks[index]["state"]["value"]
                 block_name = palette[block_id]["Name"]["value"]
                 row += block_name + " "
+                unique_blocks.add(block_name)  # 将 block_name 添加到集合中
             output += row + "\n"
         output += "\n"
 
-    return output
-"""
-filename = input("Enter the .nbt file name (without extension): ")
+    return output, unique_blocks
 
-output_text = print_structure(filename)
-
-with open(f'nbt/{filename}.txt', 'w') as f:
-    f.write(output_text)
-
-print("File saved successfully.")
-"""
-# 所有的 .nbt
 nbt_files = [file.split('.')[0] for file in os.listdir('nbt') if file.endswith('.nbt')]
 
+all_unique_blocks = set()  # 用于存储所有文件中不重复的 block_name
+
 for filename in nbt_files:
-    output_text = print_structure(filename)
+    output_text, unique_blocks = print_structure(filename)
+    all_unique_blocks.update(unique_blocks)  # 将当前文件的不重复 block_name 添加到总集合中
+
     with open(f'nbt/txt/{filename}.txt', 'w') as f:
         f.write(output_text)
     print(f"File {filename}.txt saved successfully.")
+
+# 输出所有不重复的 block_name 到一个文件中
+with open('nbt/txt/texture/all.txt', 'w') as f:
+    for block_name in all_unique_blocks:
+        f.write(block_name + '\n')
+
+print("All unique block names saved successfully.")
