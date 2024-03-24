@@ -15,9 +15,9 @@ def replace_quotes(input_file):
 
 
 def print_structure(filename):
-    nbt_content = str(nbt.read_from_nbt_file(f"nbt/{filename}.nbt"))
+    nbt_content = nbt.read_from_nbt_file(f"nbt/{filename}.nbt")
     with open(f'nbt/json/{filename}.json', 'w') as f:
-        f.write(nbt_content)
+        f.write(str(nbt_content))
 
     replace_quotes(filename)
 
@@ -32,23 +32,23 @@ def print_structure(filename):
     print("Total blocks:", len(blocks))
 
     output = ""
-    unique_blocks = set()  # 用于存储不重复的 block_name
+    unique_blocks = set()
 
-    for y in range(size[1]):
+    for y in range(size[1]-1, -1, -1):
         for z in range(size[2]):
             row = ""
             for x in range(size[0]):
-                index = x + size[0] * (z + size[2] * y)
-                if index < len(blocks):
-                    block_id = blocks[index]["state"]["value"]
-                    block_name = palette[block_id]["Name"]["value"]
-                    row += block_name + ","
-                    unique_blocks.add(block_name)  # 将 block_name 添加到集合中
-                else:
-                    block_name = "minecraft:air"
-                    row += block_name + ","
-                    # print("Index out of range:", index)
-                    continue  # 超出部分都是空气，跳过当前迭代，继续
+                block_found = False
+                for block_data in blocks:
+                    if block_data["pos"]["value"] == [x, y, z]:
+                        block_id = block_data["state"]["value"]
+                        block_name = palette[block_id]["Name"]["value"]
+                        row += block_name + ","
+                        unique_blocks.add(block_name)
+                        block_found = True
+                        break
+                if not block_found:
+                    row += "minecraft:air,"
             row = row.rstrip(',') + " \n"
             output += row
         output += "\n"
