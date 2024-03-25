@@ -89,43 +89,68 @@ import shutil
 import zipfile
 
 def checkAndOutputModel(metadata_name, model, modid, register_id, textures, textures_root):
-    if model == 'cube' or model == "minecraft:cube":
-        mapping = {'down': 'bottom.png', 'up': 'top.png', 'north': 'left.png', 'south': 'right.png',
-                   'west': 'front.png', 'east': 'back.png'}
-        for old_name, new_name in mapping.items():
-            texture_path = (os.path.join(textures_root, textures[old_name][len(modid + ':'):] + ".png")
-                            .replace('/', "\\"))
-            texture_copy_path = texture_path.replace(".png", "_copy.png")
-            shutil.copy(texture_path, texture_copy_path)
-
+    try:
+        if model == 'cube' or model == "minecraft:cube":
+            mapping = {'down': 'bottom.png', 'up': 'top.png', 'north': 'left.png', 'south': 'right.png',
+                       'west': 'front.png', 'east': 'back.png'}
+            for old_name, new_name in mapping.items():
+                texture_path = (os.path.join(textures_root, textures[old_name][len(modid + ':'):] + ".png")
+                                .replace('/', "\\"))
+                texture_copy_path = texture_path.replace(".png", "_copy.png")
+                shutil.copy(texture_path, texture_copy_path)
+                exportFile = modid + "\\" + register_id + "\\" + metadata_name
+                os.makedirs(exportFile, exist_ok=True)
+                shutil.copy(texture_path, os.path.join(exportFile, new_name))
+        elif model == 'cube_all' or model == "minecraft:cube_all":
+            texture_path = os.path.join(textures_root, textures['all'][len(modid + ':'):] + ".png")
             exportFile = modid + "\\" + register_id + "\\" + metadata_name
             os.makedirs(exportFile, exist_ok=True)
-            shutil.copy(texture_path, os.path.join(exportFile, new_name))
-    elif model == 'cube_all' or model == "minecraft:cube_all":
-        texture_path = os.path.join(textures_root, textures['all'][len(modid + ':'):] + ".png")
-        exportFile = modid + "\\" + register_id + "\\" + metadata_name
-        os.makedirs(exportFile, exist_ok=True)
-        shutil.copy(texture_path, os.path.join(exportFile, 'fill.png'))
-    else:
-        raise RuntimeError("无法处理：" + register_id + metadata_name + "，因为存在未定义的特殊方块模型(" + str(model) + ")")
+            shutil.copy(texture_path, os.path.join(exportFile, 'fill.png'))
+        elif model == 'cube_column' or model == "minecraft:cube_column":
+            # TODO
+            pass
+        elif model == 'cube_bottom_top' or model == "minecraft:cube_bottom_top":
+            # TODO
+            pass
+        else:
+            raise RuntimeError("无法处理：" + register_id + " " + metadata_name + "，因为存在未定义的特殊方块模型(" + str(model) + ")")
+    except Exception as e:
+        print(e)
 def process_blockstate(json_data, modid, register_id, textures_root):
     output_dir = os.path.join(textures_root, register_id)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
 
-    if json_data.get('default', {}):
-        variants = json_data.get('default', {})
+    if json_data.get('defaults', {}):
+        defaultSelectVariants(modid, register_id, textures_root,json_data.get('defaults', {}))
     elif json_data.get('variants', {}):
         variants = json_data.get('variants', {})
-    else: raise RuntimeError("遇到未定义的blockstate文件")
+        variantsSelectVariants(modid, register_id, textures_root, variants)
+    if not json_data.get('variants', {}) and not json_data.get('default', {}): raise RuntimeError("遇到未定义的blockstate文件")
 
+
+def defaultSelectVariants(modid, register_id, textures_root, get_defaluts):
+        model = get_defaluts.get('model', {})
+        if get_defaluts.get('textures',{}):
+            textures = get_defaluts.get('textures',{})
+            metadata_name = register_id
+        else:
+            variants = get_defaluts.get('variants', {})
+            for metadata_name, variant_list in variants.items():
+                for variant in variant_list:
+                    textures = variant.get('textures')
+                # 根据 model 类型处理 textures 并重命名文件
+        checkAndOutputModel(metadata_name, model, modid, register_id, textures, textures_root)
+
+def variantsSelectVariants(modid, register_id, textures_root, variants):
     for metadata_name, variant_list in variants.items():
         for variant in variant_list:
             model = variant.get('model')
             textures = variant.get('textures')
             # 根据 model 类型处理 textures 并重命名文件
             checkAndOutputModel(metadata_name, model, modid, register_id, textures, textures_root)
+
 
 class Main:
     # 解压 Minecraft 模组 jar 文件到临时目录
@@ -137,9 +162,10 @@ class Main:
     # TODO:批量ALL ↑
 
     # 用户输入modid 和 方块注册名
-    jar_file_path = "Magneticraft_1.12-2.8.5-dev.jar" #input("请输入需要提取的jar文件路径:") 暂时只用这个，我不知道什么问题但是我用不了Input给他传参，我想弄但是明天再咕咕
-    modid = input("请输入需要提取的modid:") #magneticraft
-    register_id = input("请输入需要提取的方块注册ID:") #mutliblock_parts
+    jar_file_path = "AdvancedRocketry-1.12.2-2.0.0-17.jar"
+    # "Magneticraft_1.12-2.8.5-dev.jar" 暂时只用这个，我不知道什么问题但是我用不了Input给他传参，我想弄但是明天再咕咕
+    modid = "advancedrocketry" #input("请输入需要提取的modid:") #magneticraft
+    register_id = "blastbrick" # input("请输入需要提取的方块注册ID:") #multiblock_parts tile_limestone
 
 
     temp_dir = r'unzipped_temp'
