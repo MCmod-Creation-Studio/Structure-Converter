@@ -2,7 +2,9 @@ import json
 import python_nbt.nbt as nbt
 import os
 
-
+# 新建文件（如果没有）
+os.makedirs('./nbt/json', exist_ok=True)
+os.makedirs('./nbt/txt/texture', exist_ok=True)
 def replace_quotes(input_file):
     with open(f"nbt/json/{input_file}.json", 'r') as f:
         content = f.read()
