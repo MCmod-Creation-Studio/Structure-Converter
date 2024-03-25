@@ -2,9 +2,7 @@ import json
 import python_nbt.nbt as nbt
 import os
 
-# 新建文件（如果没有）
-os.makedirs('./nbt/json', exist_ok=True)
-os.makedirs('./nbt/txt/texture', exist_ok=True)
+
 def replace_quotes(input_file):
     with open(f"nbt/json/{input_file}.json", 'r') as f:
         content = f.read()
@@ -14,7 +12,6 @@ def replace_quotes(input_file):
 
     with open(f"nbt/json/{input_file}.json", 'w') as f:
         f.write(modified_content)
-
 
 def print_structure(filename):
     nbt_content = nbt.read_from_nbt_file(f"nbt/{filename}.nbt")
@@ -26,6 +23,9 @@ def print_structure(filename):
     with open(f'nbt/json/{filename}.json', 'r') as f:
         json_data = json.load(f)
 
+    with open(f'nbt/json/{filename}.json', 'w') as f:
+        f.write(json.dumps(json_data,sort_keys=True,indent=4))
+
     size = json_data["value"]["size"]["value"]
     blocks = json_data["value"]["blocks"]["value"]
     palette = json_data["value"]["palette"]["value"]
@@ -36,7 +36,7 @@ def print_structure(filename):
     output = ""
     unique_blocks = set()
 
-    for y in range(size[1]-1, -1, -1):
+    for y in range(size[1] - 1, -1, -1):
         for z in range(size[2]):
             row = ""
             for x in range(size[0]):
@@ -56,15 +56,11 @@ def print_structure(filename):
         output += "\n"
     return output, unique_blocks
 
-def check_folder():
-    if not os.path.exists('nbt'):
-        os.makedirs('nbt')
-    if not os.path.exists('nbt/json'):
-        os.makedirs('nbt/json')
-    if not os.path.exists('nbt/txt'):
-        os.makedirs('nbt/txt')
-    if not os.path.exists('nbt/txt/texture'):
-        os.makedirs('nbt/txt/texture')
+
+def check_folder():  # 创建必要的文件夹
+    os.makedirs(r'nbt\json', exist_ok=True)
+    os.makedirs(r'nbt\txt\texture', exist_ok=True)
+
 
 check_folder()
 
