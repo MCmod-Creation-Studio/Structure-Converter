@@ -1,7 +1,7 @@
 """
 1.解压该文件目录下的Mincecraft模组jar文件，找到textures、blockstates文件夹
 2.读取blockstates文件夹，根据提供的方块RegisterID，找到 {Register}，json
-{Register}，json中，读取variants字段
+{Register}，json中，读取variants或者defaults字段
 第一层为元数据名
 3.在textures中找对应材质
 4.创建文件夹，储存模组中的各个blockstates对应的元数据名的textures
@@ -10,7 +10,7 @@
 将down对应的文件改名为bottom.png，将up对应的文件改名为top.png，将north对应的文件改名为left.png，
 将south对应的文件改名为right.png，将west对应的文件改名为front.png，将east对应的文件改名为back.png
 如果model字段为cube_all，那么：
-将south对应的文件改名为fill.png
+将all对应的文件改名为fill.png
 
 Ex:Magneticraft_1.12-2.8.5-dev.jar\assets\magneticraft\blockstates\multiblock_parts.json
 {
@@ -88,7 +88,7 @@ import os
 import shutil
 import zipfile
 
-def checkAndOutputModel(metadata_name, model, modid, register_id, textures, textures_root):
+def checkAndOutputTextures(metadata_name, model, modid, register_id, textures, textures_root):
     try:
         if model == 'cube' or model == "minecraft:cube":
             mapping = {'down': 'bottom.png', 'up': 'top.png', 'north': 'left.png', 'south': 'right.png',
@@ -96,8 +96,6 @@ def checkAndOutputModel(metadata_name, model, modid, register_id, textures, text
             for old_name, new_name in mapping.items():
                 texture_path = (os.path.join(textures_root, textures[old_name][len(modid + ':'):] + ".png")
                                 .replace('/', "\\"))
-                texture_copy_path = texture_path.replace(".png", "_copy.png")
-                shutil.copy(texture_path, texture_copy_path)
                 exportFile = modid + "\\" + register_id + "\\" + metadata_name
                 os.makedirs(exportFile, exist_ok=True)
                 shutil.copy(texture_path, os.path.join(exportFile, new_name))
@@ -108,7 +106,15 @@ def checkAndOutputModel(metadata_name, model, modid, register_id, textures, text
             shutil.copy(texture_path, os.path.join(exportFile, 'fill.png'))
         elif model == 'cube_column' or model == "minecraft:cube_column":
             # TODO
-            pass
+            sideTexture_path = os.path.join(textures_root, textures['side'][len(modid + ':'):] + ".png")
+            endTexture_path = os.path.join(textures_root, textures['end'][len(modid + ':'):] + ".png")
+            exportFile = modid + "\\" + register_id + "\\" + metadata_name
+            os.makedirs(exportFile, exist_ok=True)
+            for i in ['left.png','right.png','front.png','back.png']:
+                shutil.copy(sideTexture_path, os.path.join(exportFile,i))
+            for i in ['bottom.png','top.png']:
+                shutil.copy(endTexture_path, os.path.join(exportFile,i))
+
         elif model == 'cube_bottom_top' or model == "minecraft:cube_bottom_top":
             # TODO
             pass
@@ -135,13 +141,13 @@ def defaultSelectVariants(modid, register_id, textures_root, get_defaluts):
         if get_defaluts.get('textures',{}):
             textures = get_defaluts.get('textures',{})
             metadata_name = register_id
+            checkAndOutputTextures(metadata_name, model, modid, register_id, textures, textures_root)
         else:
             variants = get_defaluts.get('variants', {})
             for metadata_name, variant_list in variants.items():
                 for variant in variant_list:
                     textures = variant.get('textures')
-                # 根据 model 类型处理 textures 并重命名文件
-        checkAndOutputModel(metadata_name, model, modid, register_id, textures, textures_root)
+                    checkAndOutputTextures(metadata_name, model, modid, register_id, textures, textures_root)
 
 def variantsSelectVariants(modid, register_id, textures_root, variants):
     for metadata_name, variant_list in variants.items():
@@ -149,7 +155,7 @@ def variantsSelectVariants(modid, register_id, textures_root, variants):
             model = variant.get('model')
             textures = variant.get('textures')
             # 根据 model 类型处理 textures 并重命名文件
-            checkAndOutputModel(metadata_name, model, modid, register_id, textures, textures_root)
+            checkAndOutputTextures(metadata_name, model, modid, register_id, textures, textures_root)
 
 
 class Main:
@@ -162,10 +168,10 @@ class Main:
     # TODO:批量ALL ↑
 
     # 用户输入modid 和 方块注册名
-    jar_file_path = "AdvancedRocketry-1.12.2-2.0.0-17.jar"
+    jar_file_path = "Magneticraft_1.12-2.8.5-dev.jar" #"AdvancedRocketry-1.12.2-2.0.0-17.jar"
     # "Magneticraft_1.12-2.8.5-dev.jar" 暂时只用这个，我不知道什么问题但是我用不了Input给他传参，我想弄但是明天再咕咕
-    modid = "advancedrocketry" #input("请输入需要提取的modid:") #magneticraft
-    register_id = "blastbrick" # input("请输入需要提取的方块注册ID:") #multiblock_parts tile_limestone
+    modid = "magneticraft"#"advancedrocketry" #input("请输入需要提取的modid:") #magneticraft
+    register_id = "ores"#"blastbrick" # input("请输入需要提取的方块注册ID:") #multiblock_parts tile_limestone
 
 
     temp_dir = r'unzipped_temp'
